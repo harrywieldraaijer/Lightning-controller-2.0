@@ -1,7 +1,5 @@
 /*
-      Module: Basic Frame with OTA, Little FS, getHTTP and deserialize getHTTP output.
-
-      Project code version/date: Lightning Controller 2.0 / 8-januari-2024
+      Project code version/date: Lightning Controller 2.0 / 10-januari-2024
 
       Project Location: Projects/
 
@@ -13,13 +11,14 @@
      
   Version history:
     
+    Version 0.2 - 10-januari-2024     Added and updated HTML on webClient. Store config in /config.json
     Version 0.1 - 8-januari-2024      Initial version
   
   
 */
 
-//  Enable or disable debugging
-#define DEBUG 0
+//  Enable or disable debugging 0 is off / 1 is on
+#define DEBUG 1
 #if DEBUG == 1
 #define debug(x) Serial.print(x)
 #define debugln(x) Serial.println(x)
@@ -50,26 +49,27 @@
 
 #include <SPI.h>  // required for RTClib.h
 #include "RTClib.h"
+#define TIME_24_HOUR
 
 // Create AsyncWebServer object on port 80
 AsyncWebServer server(80);
 DNSServer dns;
 
-unsigned long ota_progress_millis = 0;
+// unsigned long ota_progress_millis = 0;
 
 // Create a WebSocket object
 AsyncWebSocket ws("/ws");
 
-// Set number of outputs
+// Set number of outputs - Not needed for the project
 #define NUM_OUTPUTS  4
 
-// Assign each GPIO to an output
+// Assign each GPIO to an output - Not needed for the project
 int outputGPIOs[NUM_OUTPUTS] = {2, 4, 12, 14};
 
 void configModeCallback (AsyncWiFiManager *myWiFiManager) {
   debugln("Entered config mode");
   debugln(WiFi.softAPIP());
-  //if you used auto generated SSID, print it
+  // if you used auto generated SSID, print it
   debugln(myWiFiManager->getConfigPortalSSID());
 }
 
@@ -81,7 +81,9 @@ void initLittleFS() {
     debugln("LittleFS mounted successfully");
 }
 
+/*
 String getOutputStates(){
+  // This builds the JSON string to be transmitted - Needs to be redefined
   const int capacity = 256;  // from ArduinoJson Assistant
   debug("The capacity of the JSON string is: ");
   debugln(capacity);
@@ -100,26 +102,56 @@ String getOutputStates(){
 }
 
 void notifyClients(String state) {
+  // This sends the JSON message
   ws.textAll(state);
 }
+*/
 
 void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
-    AwsFrameInfo *info = (AwsFrameInfo*)arg;
+  // This handles the messages received from the clients
+  // this can be a request for the JSON configuration string or an updated JSON configuration string
+  AwsFrameInfo *info = (AwsFrameInfo*)arg;
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
-    if (strcmp((char*)data, "states") == 0) {
-      notifyClients(getOutputStates());
+    if (strcmp((char*)data, "configuration") == 0) {
+      debugln("Need to send the configuration to the client!");
+      File configFile = LittleFS.open("/config.json", "r");
+      if (!configFile) {
+        Serial.println("failed to open config file for reading");
+      }
+      size_t filesize = configFile.size(); //the size of the file in bytes     
+      char readConfig[filesize+1 ];   // + 1 for '\0' char at the end      
+      configFile.read((uint8_t *)readConfig, sizeof(readConfig));  
+      configFile.close(); 
+      readConfig[filesize] = '\0';
+      // debug(readConfig); 
+      ws.textAll(readConfig);
+      configFile.close();  
     }
-    else{
-      int gpio = atoi((char*)data);
-      digitalWrite(gpio, !digitalRead(gpio));
-      notifyClients(getOutputStates());
+  else{
+      char receivedConfig[768];
+      strcpy (receivedConfig, (char*)data);
+      // debug("Received JSON string: ");
+      // debugln(receivedConfig);
+      File configFile = LittleFS.open("/config.json", "w");
+      if (!configFile) {
+        debugln("failed to open config file for writing");
+      }
+      if (configFile.print(receivedConfig)){
+        debugln("The configuration has successfully been written");
+        } 
+      else {
+        debugln("The configuration could not be stored!");
+        }
+        configFile.close();
+      // Call the function to update the current settings
     }
   }
 }
 
 void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,AwsEventType type,
              void *arg, uint8_t *data, size_t len) {
+  // This function decides what to do with actions received from the client
   switch (type) {
     case WS_EVT_CONNECT:
       Serial.printf("WebSocket client #%u connected from %s\n", client->id(), client->remoteIP().toString().c_str());
@@ -137,9 +169,12 @@ void onEvent(AsyncWebSocket *server, AsyncWebSocketClient *client,AwsEventType t
 }
 
 void initWebSocket() {
+  // Adds an event to the WebSocket handler
   ws.onEvent(onEvent);
   server.addHandler(&ws);
 }
+
+unsigned long ota_progress_millis = 0;
 
 void onOTAStart() {
   // Log when OTA has started
@@ -183,7 +218,7 @@ char* GetParameterFromInternet(char* locWebLocation, char* returnValue) {
           if (httpCode == HTTP_CODE_OK || httpCode == HTTP_CODE_MOVED_PERMANENTLY) {
             String tmpReturnValue = http.getString();
             /*
-            debug("The reply of the webserveris: ");
+            debug("The reply of the webserver is: ");
             debugln(tmpReturnValue);
             debug("The size of the buffer schould be: ");
             debugln((tmpReturnValue.length())+1);
@@ -291,6 +326,7 @@ char* sunsetTime(char* curLat, char* curLng, char* timeSunrisetimeSunset){
     // debugln(timeSunrisetimeSunset);
   return timeSunrisetimeSunset;
 }
+
 // ------------------ Project section ------------------
 RTC_DS3231 rtc; // Create a rtc instance
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
@@ -381,14 +417,13 @@ else {
   ElegantOTA.onProgress(onOTAProgress);
   ElegantOTA.onEnd(onOTAEnd);
 
-  // Set GPIOs as outputs
+  // Set GPIOs as outputs Must be removed
   for (int i =0; i<NUM_OUTPUTS; i++){
     pinMode(outputGPIOs[i], OUTPUT);
   }
 
   // Start server
   server.begin();
-
 
   // Excample: Get a parameter from an website
   char getBack[512];
@@ -442,13 +477,17 @@ else {
 
 }
 
+// Get the current configuration from LittleFS
+
+// If no current configuration exists create default configuration and store it in LittleFS and continue
+
 void loop() {
   ws.cleanupClients();
   ElegantOTA.loop();
 
   // Start project code here
 
- DateTime now = rtc.now();
+    DateTime now = rtc.now();
 
     Serial.print(now.year(), DEC);
     Serial.print('/');

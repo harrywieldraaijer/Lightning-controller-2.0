@@ -1,53 +1,231 @@
-<!DOCTYPE HTML><html>
-<head>
-  <title>ESP IOT DASHBOARD</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" type="text/css" href="style.css">
-  <link rel="icon"  type="image/png" href="favicon.png">
-  <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.7.2/css/all.css" integrity="sha384-fnmOCqbTlWIlj8LyTjo7mOUStjsKC4pOpQbqyi7RrhN7udi9RwhKkMHpvLbHG9Sr" crossorigin="anonymous">
-</head>
+<!DOCTYPE html>
+<!-- Created by Harry Wieldraaijer on 23 december 2023 -->
+<!-- Version 3.1 - 10 januari 2024 -->
+<!-- Version 3.0 - 23 december 2023 -->
+<html>
+    <head>
+        <title>Instellingen verlichting</title>
+        <link rel="stylesheet" type="text/css" href="index.css">
+        <link rel="icon" type="image/png" href="favicon.png">
+    </head>
+
 <body>
-  <div class="topnav">
-    <h1>ESP WEB SERVER - Control Multiple Outputs WebSocket</h1>
-  </div>
-  <div class="content">
-    <div class="card-grid">
-        <div class="card">             
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 2</p>
-            <label class="switch">
-                <input type="checkbox" onchange="toggleCheckbox(this)" id="2">
-                <span class="slider"></span>
-            </label>
-            <p class ="state">State: <span id="2s"></span></p>
+<h1>Instellingen verlichting</h1>
+    <fieldset>
+        <legend>inschakel instellingen middag/avond:</legend>  
+        
+        <div class="column0">
+        <p>
+            inschakel tijdstip
+        </p>
+       <p>&nbsp</p>
+      
+        <p>
+            verlichtingsniveau
+        </p>
+        <p>&nbsp</p>
+        <p>
+            bewegings detectie
+        </p>
+            
         </div>
-        <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 4</p>
-            <label class="switch">
-                <input type="checkbox" onchange="toggleCheckbox(this)" id="4">
-                <span class="slider"></span>
-            </label>
-            <p class ="state">State: <span id="4s"></span></p>
+        <div class="column1">
+            <p>
+                <input type="radio" name="block1StartTime" id="block1StartTimeFixed" value="block1StartTimeFixed" onclick="block1StartChoice(this.value)"/>
+                <label for="block1StartTimeFixed">vast</label>
+            </p>
+            <p>
+                <input type="radio" name="block1StartTime" id="block1StartTimeSunset" value="block1StartTimeSunset" onclick="block1StartChoice(this.value)"  checked ß/>
+                <label for="block1StartTimeSunset">zonsondergang</label>
+            </p>
+            <p>
+                &nbsp
+            </p>
+            <p>&nbsp</p>
+            <input type="checkbox" id="block1MovementInterrupt" onclick="block1MovementInterrupt()">
         </div>
-        <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 14</p>
-            <label class="switch">
-                <input type="checkbox" onchange="toggleCheckbox(this)" id="14">
-                <span class="slider"></span>
-            </label>
-            <p class ="state">State: <span id="14s"></span></p>
+
+        <div class="column2">
+             
+                <div class="block1Fixed">
+                    <p>  
+                        <input type="time" name="block1StartTime" id="block1StartTime" min="12:00" max="23:59" value="block1StartTime"/>
+                        <label for="block1StartTime">tijdstip (12:00 ... 23:59)</label>
+                    </p>
+                </div>  
+                <div class="block1StartTimeSunset">
+                    <p>
+                        <input type="range" id="block1StartOffsetSlider" name="block1StartOffsetSlider" min="-59" max="59" value="block1StartOffsetSlider" onchange="block1StartOffset(this.value)"/>
+                        <input type="number" id="block1StartOffsetNumber" name="block1StartOffsetNumber" min="-59" max="59" value="block1StartOffsetNumber" onchange="block1StartOffset(this.value)"/>
+                        <label for="block1StartOffset">verschuiving in minuten (-59...59)</label>
+                    </p>
+                 </div>
+                <p>
+                    <input type="range" id="block1LightLevelSlider" name="block1LightLevelSlider" min="0" max="100" value="block1LightLevelSlider" onchange="block1LightLevel(this.value)"/>
+                    <input type="number" id="block1LightLevelNumber" name="block1LightLevelNumber" min="0" max="100" value="block1LightLevelNumber" onchange="block1LightLevel(this.value)"/>
+                    <label for="startShift">lichtsterkte (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                </p>
+                <div  class="block1MovementInterrupt">
+                    <input type="range" id="block1InterruptLightLevelSlider" name="block1InterruptLightLevelSlider" min="0" max="100" value="block1InterruptLightLevel" onchange="block1InterruptLightLevel(this.value)"/>
+                    <input type="number" id="block1InterruptLightLevelNumber" name="block1InterruptLightLevelNumber" min="0" max="100" value="block1InterruptLightLevel" onchange="block1InterruptLightLevel(this.value)"/>
+                    <label for="block1InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                <p> 
+                    <input type="range" id="block1InterruptdurationSlider" name="block1InterruptdurationSlider" min="0" max="30" value="block1InterruptdurationSlider" onchange="block1Interruptduration(this.value)"/>
+                    <input type="number" id="block1InterruptdurationNumber" name="block1InterruptdurationNumber" min="0" max="30" value="block1InterruptdurationNumber" onchange="block1Interruptduration(this.value)"/>
+                    <label for="block1Interruptduration">tijdsduur (0...30 minuten)</label>
+                </p>
+                </div>
         </div>
-        <div class="card">
-            <p class="card-title"><i class="fas fa-lightbulb"></i> GPIO 12</p>
-            <label class="switch">
-                <input type="checkbox" onchange="toggleCheckbox(this)" id="12">
-                <span class="slider"></span>
-            </label>
-            <p class="state">State: <span id="12s"></span></p>
+    </fieldset>
+<p></p>
+    <fieldset>
+        <legend>schakel instellingen avond/nacht:</legend>  
+        
+        <div class="column0">
+        <p>
+            omschakel tijdstip
+        </p>
+       <p>&nbsp</p>
+      
+        <p>
+            verlichtingsniveau
+        </p>
+        <p>&nbsp</p>
+        <p>
+            bewegings detectie
+        </p>
+            
         </div>
-    </div>
-</div>
-<script src="/script.js"></script>
+        <div class="column1">
+            <p>
+                <input type="radio" name="block2StartTime" id="block2StartTimeFixed" value="block2StartTimeFixed" checked />
+                <label for="block2StartTimeFixed">vast</label>
+            </p>
+            <p>
+                <input type="radio" name="block2StartTime" id="block2StartTimeSunset" value="block2StartTimeSunset" />
+                <label for="block2StartTimeSunset">n.v.t.</label>
+            </p>
+            <p>
+                &nbsp
+            </p>
+            <p>&nbsp</p>
+            <input type="checkbox" id="block2MovementInterrupt" onclick="block2MovementInterrupt()">
+        </div>
+
+        <div class="column2">
+             
+                <div class="block2Fixed">
+                    <p>  
+                        <input type="time" name="block2StartTime" id="block2StartTime" min="18:00" max="23:59" value="block2StartTime"/>
+                        <label for="block2StartTime">tijdstip (18:00 ... 23:59)</label>
+                    </p>
+                </div>  
+                <div class="block2StartTimeSunset">
+                    <p>
+                        <input type="range" id="block2StartOffsetSlider" name="block2StartOffsetSlider" min="-59" max="59" value="block2StartOffsetSlider" onchange="block2StartOffset(this.value)"/>
+                        <input type="number" id="block2StartOffsetNumber" name="block2StartOffsetNumbe" min="-59" max="59" value="block2StartOffsetNumber" onchange="block2StartOffset(this.value)"/>
+                        <label for="block2StartOffset">verschuiving in minuten (-59...59)</label>
+                    </p>
+                 </div>
+                <p>
+                    <input type="range" id="block2LightLevelSlider" name="block2LightLevelSlider" min="0" max="100" value="block2LightLevelSlider" onchange="block2LightLevel(this.value)"/>
+                    <input type="number" id="block2LightLevelNumber" name="block2LightLevelNumber" min="0" max="100" value="block2LightLevelNumber" onchange="block2LightLevel(this.value)"/>
+                    <label for="startShift">lichtsterkte (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                </p>
+                <div  class="block2MovementInterrupt">
+                    <input type="range" id="block2InterruptLightLevelSlider" name="block2InterruptLightLevelSlider" min="0" max="100" value="block2InterruptLightLevel" onchange="block2InterruptLightLevel(this.value)"/>
+                    <input type="number" id="block2InterruptLightLevelNumber" name="block2InterruptLightLevelNumber" min="0" max="100" value="block2InterruptLightLevel" onchange="block2InterruptLightLevel(this.value)"/>
+                    <label for="block2InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                <p> 
+                    <input type="range" id="block2InterruptdurationSlider" name="block2InterruptdurationSlider" min="0" max="30" value="block2InterruptdurationSlider" onchange="block2Interruptduration(this.value)"/>
+                    <input type="number" id="block2InterruptdurationNumber" name="block2InterruptdurationNumber" min="0" max="30" value="block2InterruptdurationNumber" onchange="block2Interruptduration(this.value)"/>
+                    <label for="block2Interruptduration">tijdsduur (0...30 minuten)</label>
+                </p>
+                </div>
+        </div>
+    </fieldset>
+ <p></p>   
+    <fieldset>
+        <legend>schakel instellingen nacht/morgen:</legend>  
+        
+        <div class="column0">
+        <p>
+            uitschakel tijdstip
+        </p>
+       <p>&nbsp</p>
+      
+        <p>
+            verlichtingsniveau
+        </p>
+        <p>&nbsp</p>
+        <p>
+            bewegings detectie
+        </p>
+            
+        </div>
+        <div class="column1">
+            <p>
+                <input type="radio" name="block3StartTime" id="block3StartTimeFixed" value="block3StartTimeFixed" onclick="block3StartChoice(this.value)"/>
+                <label for="block3StartTimeFixed">vast</label>
+            </p>
+            <p>
+                <input type="radio" name="block3StartTime" id="block3StartTimeSunset" value="block3StartTimeSunset" onclick="block3StartChoice(this.value)" checked/>
+                <label for="block3StartTimeSunset">zonsopkomst</label>
+            </p>
+            <p>
+                &nbsp
+            </p>
+            <p>&nbsp</p>
+            <input type="checkbox" id="block3MovementInterrupt" />
+            <label for="block3MovementInterrupt">n.v.t.</label>
+        </div>
+
+        <div class="column2">
+             
+                <div class="block3Fixed">
+                    <p>  
+                        <input type="time" name="block3StartTime" id="block3StartTime" min="18:00" max="23:59" value="block3StartTime"/>
+                        <label for="block3StartTime">tijdstip (18:00 ... 23:59)</label>
+                    </p>
+                </div>  
+                <div class="block3StartTimeSunset">
+                    <p>
+                        <input type="range" id="block3StartOffsetSlider" name="block3StartOffsetSlider" min="-59" max="59" value="block3StartOffsetSlider" onchange="block3StartOffset(this.value)"/>
+                        <input type="number" id="block3StartOffsetNumber" name="block3StartOffsetNumbe" min="-59" max="59" value="block3StartOffsetNumber" onchange="block3StartOffset(this.value)"/>
+                        <label for="block3StartOffset">verschuiving in minuten (-59...59)</label>
+                    </p>
+                 </div>
+                <p>
+                    <input type="range" id="block3LightLevelSlider" name="block3LightLevelSlider" min="0" max="100" value="block3LightLevelSlider" onchange="block3LightLevel(this.value)"/>
+                    <input type="number" id="block3LightLevelNumber" name="block3LightLevelNumber" min="0" max="100" value="block3LightLevelNumber" onchange="block3LightLevel(this.value)"/>
+                    <label for="startShift">lichtsterkte (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                </p>
+                <div  class="block3MovementInterrupt">
+                    <input type="range" id="block3InterruptLightLevelSlider" name="block3InterruptLightLevelSlider" min="0" max="100" value="block3InterruptLightLevel" onchange="block3InterruptLightLevel(this.value)"/>
+                    <input type="number" id="block3InterruptLightLevelNumber" name="block3InterruptLightLevelNumber" min="0" max="100" value="block3InterruptLightLevel" onchange="block3InterruptLightLevel(this.value)"/>
+                    <label for="block3InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <button class="testButton" type="button">Test</button> 
+                <p> 
+                    <input type="range" id="block3InterruptdurationSlider" name="block3InterruptdurationSlider" min="0" max="30" value="block3InterruptdurationSlider" onchange="block3Interruptduration(this.value)"/>
+                    <input type="number" id="block3InterruptdurationNumber" name="block3InterruptdurationNumber" min="0" max="30" value="block3InterruptdurationNumber" onchange="block3Interruptduration(this.value)"/>
+                    <label for="block3Interruptduration">tijdsduur (0...30 minuten)</label>
+                </p>
+                </div>
+        </div>
+    </fieldset>
+
+    <button class="saveButton" onclick="saveButton()">
+        Save and exit
+    </button>
+
+    <button class="exitButton">
+        Exit without saving
+    </button>
+<script src="index.js"></script>
 </body>
 </html>
-
-

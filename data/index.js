@@ -1,41 +1,28 @@
 /*
 
-Created by Harry Wieldraaijer on 23 december 2023
-Version 3.0 - 23 december 2023
-Version 3.1 - 10 januari 2024
+Created by Harry Wieldraaijer
 
+Version 3.2 - 12 januari-2024 What to do if no config.json rceived from server?
+Version 3.1 - 10 januari 2024
+Version 3.0 - 23 december 2023
+
+Documentation:
+The form manually is opened by the user by connection to the IP address of the ESP.
+This script is started.
+The script will request the configuration from the ESP.
+As long it is not received yet it will display the settings stored in Chrome local settings, if exists
+If not, it will load the default settings from this script.
+As soon as new configuration is received from the ESP this configuration will be displayed.
+When pressing the Save button the dissplayed configuration in stored in Chrome local settings and
+send to the ESP.
+It is not possible by this script to close it's own window.
 */
+
 var gateway = `ws://${window.location.hostname}/ws` ;
 var websocket;
+var semaphoreReceived = false;
+
 window.addEventListener('load',onLoad);
-
-function onLoad(event){
-    initWebSocket();
-}
-
-function initWebSocket(){
-    console.log('Try to open a websocket connection');
-    websocket = new WebSocket(gateway);
-    websocket.onopen = onOpen;
-    websocket.onclose = onClose;
-    websocket.onmessage = onMessage;
-}
-
-function onOpen(event) {
-    console.log('Connection opened')
-    websocket.send("configuration");
-}
-
-function onClose(event) {
-    console.log('Connection closed');
-    setTimeout(initWebSocket,2000);
-}
-
-function onMessage(event) {
-    var rcvJSON = JSON.parse(event.data);
-    console.log(rcvJSON);
-    // uncode the rest
-}
 
 let settings = {
     settings:{
@@ -73,19 +60,51 @@ let settings = {
             } 
         }
     }
-    };
+};
 
-
-if  (localStorage.getItem('storedSetting') !== null) {
-        console.log('There are stored settings!');
+if (semaphoreReceived === true ){
+    console.log ("Configuration received!");
+} else {
+    console.log ("Configuration not received yet! - Show stored until they are received");  
+    if  (localStorage.getItem('storedSetting') !== null) {
+        console.log('Using the local stored configuration');
         let settings=JSON.parse(localStorage.getItem('storedSetting'));
-        console.log("The stored values are: ")
+        console.log("The stored configuration is: ");
         console.log(JSON.stringify(settings));
         showValuesInForm(settings);
-} else {
-    console.log('There are no stored settings!');
-    showValuesInForm(settings);
+    } else {
+        console.log('There are no stored settings! Using the default values');
+        showValuesInForm(settings);
+    }   
+}
 
+function onLoad(event){
+    initWebSocket();
+}
+    
+function initWebSocket(){
+    console.log('Try to open a websocket connection');
+    websocket = new WebSocket(gateway);
+    websocket.onopen = onOpen;
+    websocket.onclose = onClose;
+    websocket.onmessage = onMessage;
+}
+
+function onOpen(event) {
+    console.log('Connection opened');
+    websocket.send("configuration");
+}
+
+function onClose(event) {
+    console.log('Connection closed');
+    setTimeout(initWebSocket,2000);
+}
+
+function onMessage(event) {
+    var rcvJSON = JSON.parse(event.data);
+    console.log(rcvJSON);
+    showValuesInForm(rcvJSON);
+    semaphoreReceived = true;
 }
 
     function block1StartChoice(theStartChoice) {

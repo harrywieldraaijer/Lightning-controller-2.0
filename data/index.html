@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <!-- Created by Harry Wieldraaijer -->
+<!-- Version 3.3 - 18 januari 2024 Minor improvements -->
 <!-- Version 3.2 - 12 januari 2024 Save -->
 <!-- Version 3.1 - 10 januari 2024 -->
 <!-- Version 3.0 - 23 december 2023 -->
@@ -70,7 +71,7 @@
                 <div  class="block1MovementInterrupt">
                     <input type="range" id="block1InterruptLightLevelSlider" name="block1InterruptLightLevelSlider" min="0" max="100" value="block1InterruptLightLevel" onchange="block1InterruptLightLevel(this.value)"/>
                     <input type="number" id="block1InterruptLightLevelNumber" name="block1InterruptLightLevelNumber" min="0" max="100" value="block1InterruptLightLevel" onchange="block1InterruptLightLevel(this.value)"/>
-                    <label for="block1InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <label for="block1InterruptLightLevel">lichtsterkte na bewegingsdetectie (0...100%)</label>
                     <button class="testButton" type="button">Test</button> 
                 <p> 
                     <input type="range" id="block1InterruptdurationSlider" name="block1InterruptdurationSlider" min="0" max="30" value="block1InterruptdurationSlider" onchange="block1Interruptduration(this.value)"/>
@@ -88,8 +89,7 @@
         <p>
             omschakel tijdstip
         </p>
-       <p>&nbsp</p>
-      
+ <!--   <p>&nbsp</p>  -->
         <p>
             verlichtingsniveau
         </p>
@@ -105,8 +105,8 @@
                 <label for="block2StartTimeFixed">vast</label>
             </p>
             <p>
-                <input type="radio" name="block2StartTime" id="block2StartTimeSunset" value="block2StartTimeSunset" />
-                <label for="block2StartTimeSunset">n.v.t.</label>
+<!--                 <input type="radio" name="block2StartTime" id="block2StartTimeSunset" value="block2StartTimeSunset" />
+                <label for="block2StartTimeSunset">n.v.t.</label> -->
             </p>
             <p>
                 &nbsp
@@ -125,9 +125,9 @@
                 </div>  
                 <div class="block2StartTimeSunset">
                     <p>
-                        <input type="range" id="block2StartOffsetSlider" name="block2StartOffsetSlider" min="-59" max="59" value="block2StartOffsetSlider" onchange="block2StartOffset(this.value)"/>
+<!--                        <input type="range" id="block2StartOffsetSlider" name="block2StartOffsetSlider" min="-59" max="59" value="block2StartOffsetSlider" onchange="block2StartOffset(this.value)"/>
                         <input type="number" id="block2StartOffsetNumber" name="block2StartOffsetNumbe" min="-59" max="59" value="block2StartOffsetNumber" onchange="block2StartOffset(this.value)"/>
-                        <label for="block2StartOffset">verschuiving in minuten (-59...59)</label>
+                        <label for="block2StartOffset">verschuiving in minuten (-59...59)</label> -->
                     </p>
                  </div>
                 <p>
@@ -139,7 +139,7 @@
                 <div  class="block2MovementInterrupt">
                     <input type="range" id="block2InterruptLightLevelSlider" name="block2InterruptLightLevelSlider" min="0" max="100" value="block2InterruptLightLevel" onchange="block2InterruptLightLevel(this.value)"/>
                     <input type="number" id="block2InterruptLightLevelNumber" name="block2InterruptLightLevelNumber" min="0" max="100" value="block2InterruptLightLevel" onchange="block2InterruptLightLevel(this.value)"/>
-                    <label for="block2InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <label for="block2InterruptLightLevel">lichtsterkte na bewegingsdetectie (0...100%)</label>
                     <button class="testButton" type="button">Test</button> 
                 <p> 
                     <input type="range" id="block2InterruptdurationSlider" name="block2InterruptdurationSlider" min="0" max="30" value="block2InterruptdurationSlider" onchange="block2Interruptduration(this.value)"/>
@@ -181,8 +181,8 @@
                 &nbsp
             </p>
             <p>&nbsp</p>
-            <input type="checkbox" id="block3MovementInterrupt" />
-            <label for="block3MovementInterrupt">n.v.t.</label>
+<!--            <input type="checkbox" id="block3MovementInterrupt" />
+            <label for="block3MovementInterrupt">n.v.t.</label> -->
         </div>
 
         <div class="column2">
@@ -209,7 +209,7 @@
                 <div  class="block3MovementInterrupt">
                     <input type="range" id="block3InterruptLightLevelSlider" name="block3InterruptLightLevelSlider" min="0" max="100" value="block3InterruptLightLevel" onchange="block3InterruptLightLevel(this.value)"/>
                     <input type="number" id="block3InterruptLightLevelNumber" name="block3InterruptLightLevelNumber" min="0" max="100" value="block3InterruptLightLevel" onchange="block3InterruptLightLevel(this.value)"/>
-                    <label for="block3InterruptLightLevel">lichtsterkte na bewegingsmelding (0...100%)</label>
+                    <label for="block3InterruptLightLevel">lichtsterkte na bewegingsdetectie (0...100%)</label>
                     <button class="testButton" type="button">Test</button> 
                 <p> 
                     <input type="range" id="block3InterruptdurationSlider" name="block3InterruptdurationSlider" min="0" max="30" value="block3InterruptdurationSlider" onchange="block3Interruptduration(this.value)"/>

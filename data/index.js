@@ -2,6 +2,7 @@
 
 Created by Harry Wieldraaijer
 
+Version 3.3 - 12 januari-2024 Hide unused parts
 Version 3.2 - 12 januari-2024 What to do if no config.json rceived from server?
 Version 3.1 - 10 januari 2024
 Version 3.0 - 23 december 2023
@@ -236,8 +237,10 @@ function onMessage(event) {
         settings.settings.block1.interruptSettings.interruptEnabled = getCheckboxValue("block1MovementInterrupt");
         settings.settings.block1.interruptSettings.interruptDuration = document.getElementById("block1InterruptdurationNumber").value;
         settings.settings.block1.interruptSettings.interruptLightLevel= document.getElementById("block1InterruptLightLevelNumber").value;
-        settings.settings.block2.startMomentFixed = getCheckboxValue("block2StartTimeFixed");
-        settings.settings.block2.startShift = document.getElementById("block2StartOffsetNumber").value;
+        //settings.settings.block2.startMomentFixed = getCheckboxValue("block2StartTimeFixed");
+        settings.settings.block2.startMomentFixed = false;
+        // settings.settings.block2.startShift = document.getElementById("block2StartOffsetNumber").value;
+        settings.settings.block2.startShift = 0;
         settings.settings.block2.startTime = document.getElementById("block2StartTime").value;
         settings.settings.block2.lightLevel = document.getElementById("block2LightLevelNumber").value;
         settings.settings.block2.interruptSettings.interruptEnabled = getCheckboxValue("block2MovementInterrupt");
@@ -247,7 +250,8 @@ function onMessage(event) {
         settings.settings.block3.startShift = document.getElementById("block3StartOffsetNumber").value;
         settings.settings.block3.startTime = document.getElementById("block3StartTime").value;
         settings.settings.block3.lightLevel = document.getElementById("block3LightLevelNumber").value;
-        settings.settings.block3.interruptSettings.interruptEnabled = getCheckboxValue("block3MovementInterrupt");
+        //settings.settings.block3.interruptSettings.interruptEnabled = getCheckboxValue("block3MovementInterrupt");
+        settings.settings.block3.interruptSettings.interruptEnabled = false;
         settings.settings.block3.interruptSettings.interruptDuration = document.getElementById("block3InterruptdurationNumber").value;
         settings.settings.block3.interruptSettings.interruptLightLevel= document.getElementById("block3InterruptLightLevelNumber").value;
         console.log(JSON.stringify(settings));
@@ -282,6 +286,7 @@ function onMessage(event) {
         document.getElementById("block1InterruptdurationNumber").value = settings.settings.block1.interruptSettings.interruptDuration ;
         document.getElementById("block1InterruptdurationSlider").value = settings.settings.block1.interruptSettings.interruptDuration ;
         // block2
+       /*
         if (settings.settings.block2.startMomentFixed === true){
             document.getElementById("block2StartTimeFixed").checked = true;
             document.getElementById("block2StartTimeSunset").checked = false;
@@ -290,12 +295,14 @@ function onMessage(event) {
             document.getElementById("block2StartTimeSunset").checked = true;
             document.getElementById("block2StartTimeFixed").checked = false;
             block2StartChoice('block2StartTimeSunset');
-        }
+        } */
         document.getElementById("block2StartTime").value = settings.settings.block2.startTime ;
         document.getElementById("block2LightLevelNumber").value = settings.settings.block2.lightLevel ;
         document.getElementById("block2LightLevelSlider").value = settings.settings.block2.lightLevel ;
+        /*
         document.getElementById("block2StartOffsetNumber").value = settings.settings.block2.startShift ;
         document.getElementById("block2StartOffsetSlider").value = settings.settings.block2.startShift ;
+        */
         if (settings.settings.block2.interruptSettings.interruptEnabled === true){
             document.getElementById("block2MovementInterrupt").checked = true;
             document.querySelector(".block2MovementInterrupt").style.visibility = "visible";
@@ -322,6 +329,7 @@ function onMessage(event) {
         document.getElementById("block3LightLevelSlider").value = settings.settings.block3.lightLevel ;
         document.getElementById("block3StartOffsetNumber").value = settings.settings.block3.startShift ;
         document.getElementById("block3StartOffsetSlider").value = settings.settings.block3.startShift ;
+        /*
         if (settings.settings.block3.interruptSettings.interruptEnabled === true){
             document.getElementById("block3MovementInterrupt").checked = true;
             document.querySelector(".block3MovementInterrupt").style.visibility = "visible";
@@ -329,6 +337,7 @@ function onMessage(event) {
             document.getElementById("block3MovementInterrupt").checked = false;
             document.querySelector(".block3MovementInterrupt").style.visibility = "hidden";
         }
+        */
         document.getElementById("block3InterruptLightLevelNumber").value = settings.settings.block3.interruptSettings.interruptLightLevel ;
         document.getElementById("block3InterruptLightLevelSlider").value = settings.settings.block3.interruptSettings.interruptLightLevel ;
         document.getElementById("block3InterruptdurationNumber").value = settings.settings.block3.interruptSettings.interruptDuration ;

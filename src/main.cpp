@@ -1,7 +1,7 @@
 /*
       Project code version/date: Lightning Controller 2.0 / 10-januari-2024
 
-      Project Location: Projects/
+      Project Location: Users/harrywieldraaijer/Documents/PlatformIO/Projects/LigthController2.0/Project/Lightning controller 2.0
 
       Created by: Harry Wieldraaijer
 
@@ -11,7 +11,8 @@
      
   Version history:
     
-    Version 0.26 - 15-januari-2024    Set up first running program next step
+    Version 0.27 - 18-januari-2024    First working version ready for aplha testing
+    Version 0.26 - 15-januari-2024    Set up first running program next step (Saved on github)
     Version 0.25 - 15-januari-2024    Replaced Serial.print with Serial.printf (Saved on github)
     Version 0.24 - 14-januari-2024    Set up first running program next step
     Version 0.23 - 14-januari-2024    Set up first running program next step
@@ -56,11 +57,21 @@
 #include "RTClib.h"
 #define TIME_24_HOUR
 
+#include <NewRemoteTransmitter.h>
+#define clickOnClickOffPin 17
+#define clickOnClickOfAddress 19560623
+NewRemoteTransmitter dimmer01 (clickOnClickOfAddress,clickOnClickOffPin,260,3); //dimmer
+NewRemoteTransmitter transmitter01 (clickOnClickOfAddress,clickOnClickOffPin,260,3); //switch
+
+#define movementInterruptPin 19
+
 // Define running semaphores
 int SEMAPHORE_PREVIOUS_BLOCK_NUMBER = 0;
 int SEMAPHORE_CURRENT_BLOCK_NUMBER = 0;
 bool SEMAPHORE_MOVEMENT_DETECTED = false;
 bool SEMAPHORE_MOVEMENT_ACTIVE = false;
+int SEMAPHORE_INTERRUPT_DURATION = 0; // Minutes
+unsigned long SEMAPHORE_MOVEMENT_START = 0;
 bool SEMAPHORE_TIMER_INTERRUPT = false;
 
 // Create AsyncWebServer object on port 80
@@ -116,7 +127,7 @@ void handleWebSocketMessage(void *arg, uint8_t *data, size_t len) {
   if (info->final && info->index == 0 && info->len == len && info->opcode == WS_TEXT) {
     data[len] = 0;
     if (strcmp((char*)data, "configuration") == 0) {
-      Serial.printf("Need to send the configuration to the client!\n");
+      Serial.printf("This client requests for configuration settings\n");
       readConfigFile();
       ws.textAll(currentConfig);
     }  else
@@ -315,6 +326,7 @@ RTC_DS3231 rtc; // Create a rtc instance
 char daysOfTheWeek[7][12] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
 
 int calcTime(char* localTime){
+  // Input hh:mm -> Output integer (60*hh+mm)
   int curHour = 0;
   char tmpHour[3];
   strncpy(tmpHour,&localTime[0],2);
@@ -326,6 +338,30 @@ int calcTime(char* localTime){
   int timeInteger = (60*atoi(tmpHour))+atoi(tmpMinute);
   //Serial.printf("The current timeInteger is: %i\n",timeInteger);
   return timeInteger;
+}
+
+void setRTC(){
+  char fromURL[] = "http://worldtimeapi.org/api/timezone/Europe/Amsterdam";
+  char requestedParameter[] = "datetime";
+  char returnValue[512];
+  getVarFromJasonVar(fromURL,requestedParameter,returnValue);
+  //Serial.printf("The contents of the parameter is: %s\n",returnValue);
+  rtc.adjust(DateTime (returnValue));
+  DateTime now = rtc.now();
+    Serial.print(now.year(), DEC);
+    Serial.print('/');
+    Serial.print(now.month(), DEC);
+    Serial.print('/');
+    Serial.print(now.day(), DEC);
+    Serial.print(" (");
+    Serial.print(daysOfTheWeek[now.dayOfTheWeek()]);
+    Serial.print(") ");
+    Serial.print(now.hour(), DEC);
+    Serial.print(':');
+    Serial.print(now.minute(), DEC);
+    Serial.print(':');
+    Serial.print(now.second(), DEC);
+    Serial.println();
 }
 
 struct settingsBlock{
@@ -476,6 +512,75 @@ int getCurrentBlockNumber(){
   return currentblockNumber;
 }
 
+void setDimmer(int locLevel){
+  const int dimmerLevel = locLevel * 15  / 100 ;
+  if (dimmerLevel==0) {
+    transmitter01.sendUnit(0,false);
+  }  else {
+    dimmer01.sendDim(0,dimmerLevel);
+  }
+}
+
+void updateSettings(int currentBlockNumber, int selectedIntenity){
+  // selectedIntenity 0 = Default, 1 = Interrupt
+  int baseLevel;
+  int interruptLevel;
+  switch (currentBlockNumber) {
+    case 1:
+        baseLevel = settingsBlock1.blockBaseLevel;
+        if (settingsBlock1.blockIntEnabled == 0) {
+          interruptLevel=settingsBlock1.blockBaseLevel;
+        } else
+        if (settingsBlock1.blockIntEnabled == 1) {
+          interruptLevel=settingsBlock1.blockIntLevel;
+        }
+        break;
+      case 2:
+        baseLevel = settingsBlock2.blockBaseLevel;
+        if (settingsBlock2.blockIntEnabled == 0) {
+          interruptLevel=settingsBlock2.blockBaseLevel;
+        } else
+        if (settingsBlock2.blockIntEnabled == 1) {
+          interruptLevel=settingsBlock2.blockIntLevel;
+        }
+        break;
+      case 3:
+        baseLevel = settingsBlock3.blockBaseLevel;
+        if (settingsBlock3.blockIntEnabled == 0) {
+          interruptLevel=settingsBlock3.blockBaseLevel;
+        } else
+        if (settingsBlock3.blockIntEnabled == 1) {
+          interruptLevel=settingsBlock3.blockIntLevel;
+        }
+        break;
+  }
+  if (selectedIntenity == 0) {
+      Serial.printf("Requested level: %i\n",baseLevel);
+      setDimmer(baseLevel);
+  } else {
+      if (selectedIntenity == 1) {
+        Serial.printf("Requested level: %i\n",interruptLevel);
+        setDimmer(interruptLevel);
+    }
+  }
+}
+
+int getInterruptDuration(int currentBlockNumber) {
+  int currentDuration;
+  switch (currentBlockNumber) {
+      case 1:
+        currentDuration = settingsBlock1.blockIntDuration;
+      break;
+      case 2:
+        currentDuration = settingsBlock2.blockIntDuration;
+      break;
+      case 3:
+        currentDuration = settingsBlock3.blockIntDuration;
+      break;
+  }
+  return currentDuration;
+}
+
 // Create a timer for 45 seconds
 hw_timer_t *Timer0_Cfg = NULL;
 void IRAM_ATTR Timer0_ISR()
@@ -483,6 +588,9 @@ void IRAM_ATTR Timer0_ISR()
     SEMAPHORE_TIMER_INTERRUPT = true;
 }
 
+void IRAM_ATTR motionDetected() {
+   SEMAPHORE_MOVEMENT_DETECTED = true;
+}
 // ------------------ Initialization section ------------------
 
 void setup(){
@@ -591,13 +699,14 @@ else {
   */
 
   // ------------------ Project section ------------------
+  pinMode(movementInterruptPin, INPUT_PULLUP);
+  attachInterrupt(movementInterruptPin, motionDetected, RISING); 
 
   if (! rtc.begin()) {
     Serial.println("Couldn't find RTC");
     Serial.flush();
     while (1) delay(10);
   }
-
   if (rtc.lostPower()) {
     Serial.printf("RTC lost power, let's set the time!");
     // When time needs to be set on a new device, or after a power loss, the
@@ -608,13 +717,7 @@ else {
     // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
   }
 
-    // When time needs to be re-set on a previously configured device, the
-    // following line sets the RTC to the date & time this sketch was compiled
-    // rtc.adjust(DateTime(F(__DATE__), F(__TIME__)));
-    // This line sets the RTC with an explicit date & time, for example to set
-    // January 21, 2014 at 3am you would call:
-    // rtc.adjust(DateTime(2014, 1, 21, 3, 0, 0));
-
+setRTC();
 defineRunningParameters();
 
 // Print out the data for each person using the displayBlockInfo function
@@ -636,21 +739,26 @@ void loop() {
   // Start project code here
 
   // Main loop
-    
+
     if (SEMAPHORE_MOVEMENT_DETECTED){
+      SEMAPHORE_CURRENT_BLOCK_NUMBER = getCurrentBlockNumber();
       //Set counter, update output
-      //updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,1); // 0 = Default, 1 = Interrupt
+      SEMAPHORE_MOVEMENT_START = millis();
+      //Serial.printf("SEMAPHORE_MOVEMENT_START: %i\n",SEMAPHORE_MOVEMENT_START);
+      SEMAPHORE_INTERRUPT_DURATION = getInterruptDuration(SEMAPHORE_CURRENT_BLOCK_NUMBER);
+      //Serial.printf("SEMAPHORE_INTERRUPT_DURATION: %i\n",(SEMAPHORE_INTERRUPT_DURATION*60*1000));
+      updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,1); // 0 = Default, 1 = Interrupt
       SEMAPHORE_MOVEMENT_ACTIVE = true;
       SEMAPHORE_MOVEMENT_DETECTED = false;
     }
 
     if (SEMAPHORE_MOVEMENT_ACTIVE) {
+      // Use the value from the the previous block SEMAPHORE_CURRENT_BLOCK_NUMBER = getCurrentBlockNumber();
       // have we reached the end of this interrupt block?
-      // for the interrupt duration we use the settings of the moment
-      // the interrupt happens
-      // but at the end we use the settings of the current situation
-      // if we reached the end then
-      //updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,0); // 0 = Default, 1 = Interrupt // return to the default settings
+      if (millis() >= SEMAPHORE_MOVEMENT_START + (SEMAPHORE_INTERRUPT_DURATION*1000*60)){
+        updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,0); // 0 = Default, 1 = Interrupt 
+        SEMAPHORE_MOVEMENT_ACTIVE = false;
+      }
     }
     
     if (SEMAPHORE_TIMER_INTERRUPT) {
@@ -669,9 +777,19 @@ void loop() {
       }
       SEMAPHORE_TIMER_INTERRUPT = false;
       if (SEMAPHORE_PREVIOUS_BLOCK_NUMBER != SEMAPHORE_CURRENT_BLOCK_NUMBER){
+        if(SEMAPHORE_PREVIOUS_BLOCK_NUMBER==2 && SEMAPHORE_CURRENT_BLOCK_NUMBER==3){
+          // On switching from block2 to block3 adjust clock and time sunrise and sunset
+          setRTC();
+          defineRunningParameters();
+        }
         Serial.printf("Update the output here!\n");
-        //updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,1); // 0 = Default, 1 = Interrupt
+        if (SEMAPHORE_MOVEMENT_ACTIVE) {
+          updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,1); // 0 = Default, 1 = Interrupt
+        } else {
+          updateSettings(SEMAPHORE_CURRENT_BLOCK_NUMBER,0); // 0 = Default, 1 = Interrupt
+        }
         SEMAPHORE_PREVIOUS_BLOCK_NUMBER = SEMAPHORE_CURRENT_BLOCK_NUMBER ;
       }
+      // Define here if we need to update the dimmer every cycle
     }
 }
